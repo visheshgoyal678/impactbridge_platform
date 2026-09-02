@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>CivicNexus — Citizen Problem Reporter</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#003527",
+                        "primary-container": "#064e3b",
+                        "on-primary": "#ffffff",
+                        "on-primary-container": "#80bea6",
+                        "secondary": "#99462a",
+                        "secondary-container": "#fe9572",
+                        "background": "#f8f9ff",
+                        "surface": "#f8f9ff"
+                    },
+                    fontFamily: {
+                        "headline-lg": ["\"Source Serif 4\"", "Georgia", "serif"],
+                        "headline-md": ["\"Source Serif 4\"", "Georgia", "serif"],
+                        "body-md": ["\"Hanken Grotesk\"", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        html {
+            scroll-behavior: smooth;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeSpeed;
+        }
+        .glass-card {
+            background-color: #ffffff;
+            border: 1px solid rgba(226, 232, 240, 0.85);
+            box-shadow: 0 4px 20px -2px rgba(0, 53, 39, 0.04);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+            will-change: transform;
+            transform: translateZ(0);
+            contain: content;
+        }
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 53, 39, 0.08);
+        }
+        .bg-nexus-grid {
+            background-color: #f8f9ff;
+            background-image: 
+                linear-gradient(to right, rgba(6, 78, 59, 0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(6, 78, 59, 0.03) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+    </style>
+</head>
+<body class="bg-nexus-grid text-slate-900 font-body-md min-h-screen antialiased flex flex-col p-4 sm:p-8">
+
+<div class="max-w-3xl mx-auto w-full space-y-6">
+    <!-- Header -->
+    <header class="flex justify-between items-center pb-4 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+            <button onclick="window.location.href='/'" class="p-2 rounded-xl bg-white border shadow-xs hover:bg-slate-50">
+                <span class="material-symbols-outlined text-base">arrow_back</span>
+            </button>
+            <div>
+                <h1 class="font-headline-lg text-2xl font-bold text-primary">Report Ground Challenge</h1>
+                <p class="text-xs text-slate-500">Snap camera photo & describe what needs fixing</p>
+            </div>
+        </div>
+        
+        <button onclick="CitizenApp.openLiveCameraModal()" class="px-4 py-2 bg-emerald-800 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 hover:bg-emerald-900">
+            <span class="material-symbols-outlined text-sm">photo_camera</span>
+            <span>Click Image</span>
+        </button>
+    </header>
+
+    <!-- Main Describe Card -->
+    <div class="glass-card rounded-3xl p-6 sm:p-8 space-y-5 border border-slate-200 shadow-xl">
+        
+        <!-- Photo Preview Banner -->
+        <div class="relative rounded-2xl overflow-hidden border border-slate-300 bg-slate-950">
+            <img id="citizenPhotoPreview" src="https://images.unsplash.com/photo-1541888946425-d0fbb18086f6?w=600" alt="Evidence" class="w-full h-48 object-cover"/>
+            <div class="absolute top-2 left-2 bg-black/70 backdrop-blur-md px-2.5 py-1 rounded-lg text-[10px] font-mono text-emerald-300 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span id="citizenGpsBadge">GPS: 26.2712° N, 78.2261° E</span>
+            </div>
+            <button onclick="CitizenApp.openLiveCameraModal()" class="absolute bottom-2 right-2 px-3 py-1.5 bg-black/75 hover:bg-black/90 text-white rounded-lg text-xs font-semibold flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">camera</span>
+                <span>Retake</span>
+            </button>
+        </div>
+
+        <form onsubmit="CitizenApp.handleSubmit(event)" class="space-y-4 text-xs sm:text-sm">
+            <div>
+                <label class="block font-bold mb-1">Problem Title *</label>
+                <input type="text" id="citizenTitle" placeholder="e.g., Road Overhaul & Water Drainage Blockage" required class="w-full border rounded-xl px-3.5 py-2.5"/>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold mb-1">Category *</label>
+                    <select id="citizenCategory" class="w-full border rounded-xl px-3 py-2.5">
+                        <option value="Infrastructure">Infrastructure</option>
+                        <option value="Water & Agriculture" selected>Water & Agriculture</option>
+                        <option value="Healthcare & AI">Healthcare & AI</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold mb-1">Location Coordinates *</label>
+                    <input type="text" id="citizenLocation" value="Belagavi Ward 4 (GPS: 26.2712° N, 78.2261° E)" required class="w-full border rounded-xl px-3 py-2.5"/>
+                </div>
+            </div>
+
+            <div>
+                <label class="block font-bold mb-1">Describe the Problem *</label>
+                <textarea id="citizenDesc" rows="4" placeholder="Explain the ground issue in detail..." required class="w-full border rounded-xl px-3.5 py-2.5"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t">
+                <button type="button" onclick="window.location.href='/'" class="px-4 py-2 border rounded-xl text-xs font-semibold">Cancel</button>
+                <button type="submit" class="px-6 py-2.5 bg-primary text-white rounded-xl text-xs font-bold shadow-md hover:bg-primary-container">
+                    Submit Challenge
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Camera -->
+<div id="modalLiveCamera" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-950 text-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+            <h3 class="font-bold text-emerald-300">Live Camera Viewfinder</h3>
+            <button onclick="CitizenApp.closeCameraModal()"><span class="material-symbols-outlined text-slate-400">close</span></button>
+        </div>
+        <div class="relative bg-black rounded-2xl overflow-hidden min-h-[280px] flex items-center justify-center">
+            <video id="liveCameraStream" autoplay playsinline class="w-full h-full object-cover"></video>
+            <canvas id="cameraCaptureCanvas" class="hidden"></canvas>
+        </div>
+        <div class="flex justify-between items-center pt-2">
+            <button onclick="CitizenApp.captureAndProceed()" class="w-14 h-14 rounded-full bg-white border-4 border-emerald-500 flex items-center justify-center text-slate-900 mx-auto active:scale-95">
+                <span class="material-symbols-outlined text-2xl">camera</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+const CitizenApp = {
+    cameraStream: null,
+    coords: { lat: 26.2712, lng: 78.2261 },
+
+    async openLiveCameraModal() {
+        const modal = document.getElementById("modalLiveCamera");
+        modal.classList.remove("hidden");
+        const videoEl = document.getElementById("liveCameraStream");
+        try {
+            this.cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            videoEl.srcObject = this.cameraStream;
+        } catch (e) {}
+    },
+
+    captureAndProceed() {
+        const videoEl = document.getElementById("liveCameraStream");
+        const canvas = document.getElementById("cameraCaptureCanvas");
+        if (!videoEl || !canvas) return;
+
+        canvas.width = videoEl.videoWidth || 640;
+        canvas.height = videoEl.videoHeight || 480;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(videoEl, 0, 0);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        document.getElementById("citizenPhotoPreview").src = dataUrl;
+        this.closeCameraModal();
+        if (window.confetti) confetti({ particleCount: 35 });
+    },
+
+    closeCameraModal() {
+        if (this.cameraStream) {
+            this.cameraStream.getTracks().forEach(t => t.stop());
+            this.cameraStream = null;
+        }
+        document.getElementById("modalLiveCamera").classList.add("hidden");
+    },
+
+    async handleSubmit(e) {
+        e.preventDefault();
+        const title = document.getElementById("citizenTitle").value;
+        const category = document.getElementById("citizenCategory").value;
+        const location = document.getElementById("citizenLocation").value;
+        const desc = document.getElementById("citizenDesc").value;
+
+        try {
+            await fetch('/api/challenges', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, description: desc, category, sdg_tag: "SDG_9", location, urgency_level: "HIGH", poster_id: 1 })
+            });
+        } catch (err) {}
+
+        if (window.confetti) confetti({ particleCount: 50 });
+        setTimeout(() => window.location.href = '/', 1200);
+    }
+};
+</script>
+</body>
+</html>
