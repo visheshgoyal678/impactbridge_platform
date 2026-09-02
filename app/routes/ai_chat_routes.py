@@ -9,7 +9,7 @@ from typing import Optional, List, Dict, Any
 import re
 
 from app.database.db import get_db
-from app.database.models import Challenge, Project, User, Milestone, Collaboration
+from app.models.database_models import Challenge, UniversityProject, User
 from app.database.firebase_db import log_bot_chat_to_firestore
 
 router = APIRouter(prefix="/api/ai", tags=["AI Copilot & Chatbot"])
@@ -38,7 +38,7 @@ def handle_ai_chat(req: ChatRequest, db = Depends(get_db)):
     
     # Contextual Database Metrics
     total_challenges = db.query(Challenge).count()
-    total_projects = db.query(Project).count()
+    total_projects = db.query(UniversityProject).count()
     
     actions = []
     suggested_prompts = []
